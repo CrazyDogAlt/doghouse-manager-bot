@@ -71,7 +71,7 @@ async def yestrains(ctx, user: discord.User, *, reason: str=None):
         await ctx.send("Failed to remove role to user, prehaps my role isn't high enough in the hierachy.")
 
     with open(DIRECTORY_TO_TRAIN_BLACKLIST_FILE, "r") as f:
-                data = f.read().splitlines()
+                data = f.read()
                 data = data.replace(str(user.id), "")
     with open(DIRECTORY_TO_TRAIN_BLACKLIST_FILE, "w") as f:
          f.write(data)
@@ -130,7 +130,7 @@ async def yesspeedrun(ctx, user: discord.User, *, reason: str=None):
         await ctx.send("Failed to remove role to user, prehaps my role isn't high enough in the hierachy.")
 
     with open(DIRECTORY_TO_SPEEDRUN_BLACKLIST_FILE, "r") as f:
-                data = f.read().splitlines()
+                data = f.read()
                 data = data.replace(str(user.id), "")
     with open(DIRECTORY_TO_SPEEDRUN_BLACKLIST_FILE, "w") as f:
          f.write(data)
