@@ -9,11 +9,9 @@ TOKEN = os.getenv("TOKEN")
 PREFIX = os.getenv("PREFIX")
 NO_TRAIN_ROLE = os.getenv("NO_TRAIN_ROLE")
 NO_SPEEDRUN_ROLE = os.getenv("NO_SPEEDRUN_ROLE")
-MAIN_GUILD = os.getenv("MAIN_GUILD")
+NO_VC_ROLE = os.getenv("NO_VC_ROLE")
 ERROR_LOGGING_CHANNEL = os.getenv("ERROR_LOGGING_CHANNEL")
 MOD_LOGGING_CHANNEL = os.getenv("MOD_LOGGING_CHANNEL")
-DIRECTORY_TO_TRAIN_BLACKLIST_FILE = os.getenv("DIRECTORY_TO_TRAIN_BLACKLIST_FILE")
-DIRECTORY_TO_SPEEDRUN_BLACKLIST_FILE = os.getenv("DIRECTORY_TO_SPEEDRUN_BLACKLIST_FILE")
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -23,148 +21,11 @@ bot = commands.Bot(command_prefix=PREFIX, intents=intents)
 
 @bot.event
 async def on_ready():
+    await bot.load_extension('Cogs.Moderation')
+    await bot.load_extension('Cogs.Memes')
+    voiceChannel = bot.get_channel(1464761761428275431)
+    await voiceChannel.connect()
     print(f'We have logged in as {bot.user}')
-
-# No train command, removes user from the train channel
-@bot.command()
-@commands.has_permissions(moderate_members=True)
-async def notrains(ctx, user: discord.User, *, reason: str=None):
-    if reason == None:
-        reason = "No reason provided."
-    # Get No Train Role Object
-    notrainrole = discord.utils.get(ctx.guild.roles, id=int(NO_TRAIN_ROLE))
-    modlogs = discord.utils.get(ctx.guild.channels, id=int(MOD_LOGGING_CHANNEL))
-    user = await ctx.guild.fetch_member(user.id)
-    # Attempt to apply role to user
-    try:
-        await user.add_roles(notrainrole)
-        await modlogs.send(ctx.author.name + " removed " + user.name + "'s access to the train channel. Reason: " + reason)
-    except:
-        await ctx.send("Failed to give role to user, prehaps my role isn't high enough in the hierachy.")
-
-    # Add user's ID to a file to prevent them from rejoining to remove the role
-    with open(DIRECTORY_TO_TRAIN_BLACKLIST_FILE, "a") as f:
-                f.write(str(user.id)+"\n")
-
-    await ctx.message.delete()
-
-    # Attempt to DM user
-    try:
-        await user.send("Your access to the train channel was revoked. Given reason: "+reason)
-        await ctx.send(user.name+" was found travelling without a valid ticket and was forced to exit the train at the next station.")
-    except:
-        await ctx.send(user.name+" was found travelling without a valid ticket and was forced to exit the train at the next station.\n-# User disabled direct messages so I wasn't able to notify them.")
-
-# Yes train command, does the opposite of above
-@bot.command()
-@commands.has_permissions(moderate_members=True)
-async def yestrains(ctx, user: discord.User, *, reason: str=None):
-    if reason == None:
-            reason = "No reason provided."
-    notrainrole = discord.utils.get(ctx.guild.roles, id=int(NO_TRAIN_ROLE))
-    modlogs = discord.utils.get(ctx.guild.channels, id=int(MOD_LOGGING_CHANNEL))
-    user = await ctx.guild.fetch_member(user.id)
-    try:
-        await user.remove_roles(notrainrole)
-        await modlogs.send(ctx.author.name + " reinstated " + user.name + "'s access to the train channel. Reason: " + reason)
-    except:
-        await ctx.send("Failed to remove role to user, prehaps my role isn't high enough in the hierachy.")
-
-    with open(DIRECTORY_TO_TRAIN_BLACKLIST_FILE, "r") as f:
-                data = f.read()
-                data = data.replace(str(user.id), "")
-    with open(DIRECTORY_TO_TRAIN_BLACKLIST_FILE, "w") as f:
-         f.write(data)
-
-    await ctx.message.delete()
-
-    try:
-        await user.send("Your access to the train channel was reinstated. Given reason: "+reason)
-        await ctx.send(user.name+" has paid their fine and is allowed to re-board the train.")
-    except:
-        await ctx.send(user.name+" has paid their fine and is allowed to re-board the train.\n-# User disabled direct messages so I wasn't able to notify them.")    
-
-# No speedrun command, removes user from the speedrunning channels
-@bot.command()
-@commands.has_permissions(moderate_members=True)
-async def nospeedrun(ctx, user: discord.User, *, reason: str=None):
-    if reason == None:
-        reason = "No reason provided."
-    # Get No Speedrun Role Object
-    nospeedrunrole = discord.utils.get(ctx.guild.roles, id=int(NO_SPEEDRUN_ROLE))
-    modlogs = discord.utils.get(ctx.guild.channels, id=int(MOD_LOGGING_CHANNEL))
-    user = await ctx.guild.fetch_member(user.id)
-    # Attempt to apply role to user
-    try:
-        await user.add_roles(nospeedrunrole)
-        await modlogs.send(ctx.author.name + " removed " + user.name + "'s access to the speedrunning channels. Reason: " + reason)
-    except:
-        await ctx.send("Failed to give role to user, prehaps my role isn't high enough in the hierachy.")
-
-    # Add user's ID to a file to prevent them from rejoining to remove the role
-    with open(DIRECTORY_TO_SPEEDRUN_BLACKLIST_FILE, "a") as f:
-                f.write(str(user.id)+"\n")
-
-    await ctx.message.delete()
-
-    # Attempt to DM user
-    try:
-        await user.send("Your access to the speedrunning channels was revoked. Given reason: "+reason)
-        await ctx.send(user.name+" is now a slowrunner.")
-    except:
-        await ctx.send(user.name+" is now a slowrunner.\n-# User disabled direct messages so I wasn't able to notify them.")
-
-# Yes train command, does the opposite of above
-@bot.command()
-@commands.has_permissions(moderate_members=True)
-async def yesspeedrun(ctx, user: discord.User, *, reason: str=None):
-    if reason == None:
-            reason = "No reason provided."
-    nospeedrunrole = discord.utils.get(ctx.guild.roles, id=int(NO_SPEEDRUN_ROLE))
-    modlogs = discord.utils.get(ctx.guild.channels, id=int(MOD_LOGGING_CHANNEL))
-    user = await ctx.guild.fetch_member(user.id)
-    try:
-        await user.remove_roles(nospeedrunrole)
-        await modlogs.send(ctx.author.name + " reinstated " + user.name + "'s access to the speedrunning channels. Reason: " + reason)
-    except:
-        await ctx.send("Failed to remove role to user, prehaps my role isn't high enough in the hierachy.")
-
-    with open(DIRECTORY_TO_SPEEDRUN_BLACKLIST_FILE, "r") as f:
-                data = f.read()
-                data = data.replace(str(user.id), "")
-    with open(DIRECTORY_TO_SPEEDRUN_BLACKLIST_FILE, "w") as f:
-         f.write(data)
-
-    await ctx.message.delete()
-
-    try:
-        await user.send("Your access to the speedrunning channels was reinstated. Given reason: "+reason)
-        await ctx.send(user.name+" is now speedy again.")
-    except:
-        await ctx.send(user.name+" is now speedy again.\n-# User disabled direct messages so I wasn't able to notify them.")    
-
-@bot.command()
-@commands.has_permissions(kick_members=True)
-async def scamkick(ctx, user: discord.User):
-     # Get the user to softban's object
-     user = await ctx.guild.fetch_member(user.id)
-     modlogs = discord.utils.get(ctx.guild.channels, id=int(MOD_LOGGING_CHANNEL))
-     # notify the user
-     try:
-         await user.send("Your account was hacked and sent scams in our server, to prevent this, your account was kicked. Rejoin by using this link: https://discord.gg/MYWbvN2yvc")
-     except:
-         pass
-     # ban and unban the user to remove their previous messages
-     try:
-        await user.ban(delete_message_seconds=86400, reason="Hacked Account")
-        await user.unban(reason="Softban removal")
-     except:
-          await ctx.send("I don't have permissions to softban this user.")
-          return
-     # Send success message and log the action
-     await ctx.message.delete()
-     await ctx.send(user.name+" fell for a free robux scam and got hacked.")
-     await modlogs.send(ctx.author.name+" scam kicked "+user.name)
 
 @bot.command()
 @commands.is_owner()
@@ -176,23 +37,6 @@ async def stop(ctx):
     else:
          ctx.send("No lol")
          return
-
-@bot.event
-async def on_member_join(member):
-    # Obtain user id's in blacklist file
-    with open(DIRECTORY_TO_TRAIN_BLACKLIST_FILE, "r") as f:
-        data = f.read().splitlines()
-        # If the user who just joined has their ID in the blacklist file, add the role back.
-        if str(member.id) in data:
-            notrainrole = discord.utils.get(member.guild.roles, id=int(NO_TRAIN_ROLE))
-            await member.add_roles(notrainrole)
-    # do the same for speedrunning role
-    with open(DIRECTORY_TO_SPEEDRUN_BLACKLIST_FILE, "r") as f:
-            data = f.read().splitlines()
-            # If the user who just joined has their ID in the blacklist file, add the role back.
-            if str(member.id) in data:
-                nospeedrunrole = discord.utils.get(member.guild.roles, id=int(NO_SPEEDRUN_ROLE))
-                await member.add_roles(nospeedrunrole)
 
 @bot.command()
 async def comeng(ctx):
